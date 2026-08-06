@@ -17,8 +17,10 @@ metadata:
       - market-analysis
       - precious-metals
       - finance
-    fallback_for_toolsets:
-      - web
+    requires_toolsets: [web]           # Hide if the web toolset is NOT active
+    requires_tools: [web_search]       # Hide if web_search tool is NOT available
+    fallback_for_toolsets: [browser]   # Hide if the browser toolset IS active
+    fallback_for_tools: [browser_navigate]  # Hide if browser_navigate IS available
 ---
 
 # Gold Market Summary
