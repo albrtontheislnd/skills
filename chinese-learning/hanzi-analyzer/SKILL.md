@@ -6,6 +6,7 @@ author: Albert
 license: MIT
 metadata:
   hermes:
+    category: chinese-learning
     tags: [Language, Chinese, Education, Hanzi, Visualization]
     related_skills: []
 ---

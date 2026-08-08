@@ -6,6 +6,7 @@ author: Albert
 platforms: [linux, macos, windows]
 metadata:
   hermes:
+    category: chinese-learning
     tags: [language, translation, chinese, vietnamese, education, hsk, tocfl]
 ---
 
