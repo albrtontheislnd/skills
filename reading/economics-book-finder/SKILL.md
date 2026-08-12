@@ -31,13 +31,26 @@ This skill has three phases: **collect**, **aggregate**, **report**. The agent d
 
 ### Phase 1 — Collect
 
+**This phase is not done until every source has been accounted for — not until it "feels" done.** With a long source list, it's easy to work through the first dozen and stop once the results feel sufficient. That silent drop-off is the main failure mode of this skill, so Phase 1 uses a hard gate (`check_coverage.py`) rather than relying on Claude's own sense of completion.
+
 1. Read `{HERMES_SKILL_DIR}/references/sources.md` for the suggested source list, organized by tier. **If the user has supplied their own list of websites, use those instead** (or merge — user-supplied sources are never overridden, only supplemented). Confirm the tier weighting for any user-supplied source with the user if it's not obvious (award page vs. casual blog vs. bestseller chart).
 2. For each source, use `web_search` and/or `web_extract` to find its current economics-book content for the target year. Award/best-of pages usually need `web_extract` directly (search their site or fetch a known URL pattern, e.g. `ft.com/bookaward`). Bestseller charts and blogs are often better reached via `web_search` first to find the current live URL, since these pages move or get re-published each year.
 
-For the Tier 4 "open domain search" list in `references/sources.md`, there's no single page to fetch — instead run each domain through `web_search` using the query templates given there (e.g. `site:domain.com "economics book" [year]`), then `web_fetch` whichever resulting articles look relevant. Treat each article as one mention at Tier 3's weight, same as any other source.
+For the Tier 4 "open domain search" list in `{HERMES_SKILL_DIR}/references/sources.md`, there's no single page to fetch — instead run each domain through `web_search` using the query templates given there (e.g. `site:domain.com "economics book" [year]`), then `web_fetch` whichever resulting articles look relevant. Treat each article as one mention at Tier 3's weight, same as any other source.
 
-3. From each source, extract every distinct book mentioned: title, author, source name, source URL, and (if available) the date/edition. Do **not** copy long excerpts — a title, author, and one-line reason-for-inclusion is enough (see copyright guidance below).
-4. Write everything you found into a single JSON file, one entry per (book, source) pair — the same book mentioned by three sources becomes three entries. See the schema in `{HERMES_SKILL_DIR}/scripts/aggregate_books.py --help` or the example below.
+4. **Immediately after checking each source — not in a batch at the end — append one entry to `source_log.json`** recording what happened, using status `"ok"` (found mentions), `"empty"` (checked, nothing relevant), or `"failed"` (couldn't access — must include a `notes` reason). See the schema and rationale in `{HERMES_SKILL_DIR}/scripts/check_coverage.py`'s docstring. Logging as you go, rather than reconstructing it afterward, is what actually catches a dropped source — reconstructing from memory tends to just "remember" the ones that were interesting.
+
+5. From each source, extract every distinct book mentioned: title, author, source name, source URL, and (if available) the date/edition. Do **not** copy long excerpts — a title, author, and one-line reason-for-inclusion is enough (see copyright guidance below). Append these to `raw_mentions.json` (schema below).
+
+6. **Once you believe the sweep is complete, run the coverage gate — do not proceed to Phase 2 until it exits 0:**
+
+   ```bash
+   python {HERMES_SKILL_DIR}/scripts/check_coverage.py --sources references/sources.md --log source_log.json
+   ```
+
+   If it reports missing sources, go check them — don't mark them `"failed"` just to satisfy the gate. `"failed"` is for genuine access problems (blocked fetch, dead link), not for "ran out of time." If a source is genuinely unreachable after a real attempt, log it as `"failed"` with why, and mention the gap to the user in your final summary rather than hiding it.
+
+`raw_mentions.json` schema (one entry per book-source pair — the same book found on three sources becomes three entries):
 
 ```json
 [
