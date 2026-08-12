@@ -1,7 +1,7 @@
 ---
 name: hanzi-analyzer
 description: Phân tích chi tiết chữ Hán (Hán tự) — bộ thủ, âm Hán Việt, mẹo ghi nhớ (chiết tự), thứ tự nét viết — và trực quan hóa hoạt hình thứ tự nét viết bằng thư viện hanzi-writer.
-version: 1.1.0
+version: 1.2.0
 author: Albert
 license: MIT
 metadata:
@@ -13,7 +13,7 @@ metadata:
 
 # Hanzi Analyzer & Tutor Skill
 
-Khi người dùng cung cấp một hoặc nhiều chữ Hán (ví dụ: `/hanzi-analyzer 爱` hoặc nhập từ/câu tiếng Trung), hãy phân tích theo định dạng chuẩn hóa bên dưới. Nếu người dùng muốn **xem/luyện thứ tự nét viết dưới dạng hình ảnh trực quan** (hoạt hình, quiz viết chữ, xuất GIF), dùng phần **Trực quan hóa nét viết (Stroke Order Visualization)** ở cuối skill này.
+Khi người dùng cung cấp một hoặc nhiều chữ Hán (ví dụ: `/hanzi-analyzer 爱` hoặc nhập từ/câu tiếng Trung), hãy phân tích theo định dạng chuẩn hóa bên dưới. Tạo file để người dùng **xem/luyện thứ tự nét viết dưới dạng hình ảnh trực quan**, dùng phần **Trực quan hóa nét viết (Stroke Order Visualization)** ở cuối skill này — file HTML sinh ra phải được hiển thị dạng **live preview inline ngay trong Hermes Desktop** (qua `open_preview`), không cần người dùng tự mở bằng trình duyệt ngoài.
 
 ## When to Use
 
@@ -25,8 +25,8 @@ Khi người dùng cung cấp một hoặc nhiều chữ Hán (ví dụ: `/hanzi
 | Việc cần làm | Cách thực hiện |
 |---|---|
 | Phân tích bộ thủ, âm Hán Việt, mẹo ghi nhớ | Làm theo mục "Quy trình phân tích" bên dưới, trả lời trực tiếp bằng văn bản |
-| Xem hoạt hình / quiz nét viết trong trình duyệt (không cần cài gì) | `python3 ${HERMES_SKILL_DIR}/scripts/generate_stroke_order.py <chữ...> --output stroke_order.html` |
-| Xuất file GIF nét viết (cần cài puppeteer) | `node ${HERMES_SKILL_DIR}/scripts/export_stroke_gif.js <chữ> --output out.gif` |
+| Xem hoạt hình / quiz nét viết dạng live preview ngay trong Hermes Desktop (không cần mở trình duyệt ngoài) | `python3 ${HERMES_SKILL_DIR}/scripts/generate_stroke_order.py <chữ...> --mode animate --loop --output stroke_order.html` rồi gọi `open_preview` với file đó |
+
 
 ## Quy trình phân tích mỗi chữ Hán
 
@@ -88,7 +88,7 @@ Sau khi phân tích văn bản như trên, sử dụng thư viện JS [`hanzi-wr
 1. **Trường hợp mặc định (xem trong trình duyệt, không cần cài dependency):**
 
    ```
-   python3 ${HERMES_SKILL_DIR}/scripts/generate_stroke_order.py 想 爱 --output stroke_order.html
+   python3 ${HERMES_SKILL_DIR}/scripts/generate_stroke_order.py 想爱 --mode animate --loop --output stroke_order.html
    ```
 
    Script này (chỉ dùng Python stdlib) sinh ra **một file HTML độc lập**, nhúng thư viện `hanzi-writer` qua CDN (jsdelivr). Khi mở file bằng trình duyệt có Internet, mỗi chữ hiển thị trong một ô lưới với:
@@ -112,11 +112,14 @@ Sau khi phân tích văn bản như trên, sử dụng thư viện JS [`hanzi-wr
    python3 ${HERMES_SKILL_DIR}/scripts/generate_stroke_order.py 你好吗 --mode quiz --output quiz.html
    ```
 
-2. Sau khi tạo file, thông báo đường dẫn file cho người dùng và tóm tắt ngắn gọn nội dung (số chữ, chế độ đã dùng).
+2. Sau khi tạo file, **luôn dùng công cụ `open_preview` để hiển thị file HTML ngay trong Hermes Desktop (live preview inline)** — KHÔNG yêu cầu người dùng tự mở file bằng trình duyệt ngoài. Quy trình chuẩn:
+   - Copy/ghi file output vào thư mục output chuẩn của môi trường (ví dụ `/mnt/user-data/outputs/`) nếu script chưa ghi trực tiếp vào đó.
+   - Gọi `open_preview` với đường dẫn file HTML đó — Hermes Desktop sẽ render trực tiếp trong khung chat (thẻ file/preview inline), người dùng có thể tương tác (bấm "Xem lại", "Đố vui"...) mà không cần rời ứng dụng.
+   - Sau khi gọi `open_preview`, chỉ tóm tắt ngắn gọn nội dung (số chữ, chế độ đã dùng) — không lặp lại đường dẫn file bằng văn bản, không hướng dẫn thao tác "mở file" thủ công.
 
 ### Pitfalls
 
-- `hanzi-writer` cần tải dữ liệu nét vẽ (`hanzi-writer-data`) từ CDN **ngay trong trình duyệt** khi mở file HTML — nếu máy mở file không có Internet, hoạt hình sẽ không hiển thị (trạng thái báo lỗi ngay trên giao diện).
+- `hanzi-writer` cần tải dữ liệu nét vẽ (`hanzi-writer-data`) từ CDN **ngay khi Hermes Desktop render file HTML** — nếu môi trường hiển thị không có Internet, hoạt hình sẽ không hiển thị (trạng thái báo lỗi ngay trên giao diện).
 - Một số chữ hiếm/dị thể có thể không có trong bộ dữ liệu `hanzi-writer-data`; khi đó script báo "Không tìm thấy dữ liệu nét" ngay trên từng ô thay vì lỗi toàn trang.
 - Không nhầm giữa phần **phân tích văn bản** (luôn trả lời trực tiếp, không cần script) và phần **trực quan hóa** (chạy script).
 
