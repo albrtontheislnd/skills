@@ -33,6 +33,9 @@ This skill has three phases: **collect**, **aggregate**, **report**. The agent d
 
 1. Read `{HERMES_SKILL_DIR}/references/sources.md` for the suggested source list, organized by tier. **If the user has supplied their own list of websites, use those instead** (or merge — user-supplied sources are never overridden, only supplemented). Confirm the tier weighting for any user-supplied source with the user if it's not obvious (award page vs. casual blog vs. bestseller chart).
 2. For each source, use `web_search` and/or `web_extract` to find its current economics-book content for the target year. Award/best-of pages usually need `web_extract` directly (search their site or fetch a known URL pattern, e.g. `ft.com/bookaward`). Bestseller charts and blogs are often better reached via `web_search` first to find the current live URL, since these pages move or get re-published each year.
+
+For the Tier 4 "open domain search" list in `references/sources.md`, there's no single page to fetch — instead run each domain through `web_search` using the query templates given there (e.g. `site:domain.com "economics book" [year]`), then `web_fetch` whichever resulting articles look relevant. Treat each article as one mention at Tier 3's weight, same as any other source.
+
 3. From each source, extract every distinct book mentioned: title, author, source name, source URL, and (if available) the date/edition. Do **not** copy long excerpts — a title, author, and one-line reason-for-inclusion is enough (see copyright guidance below).
 4. Write everything you found into a single JSON file, one entry per (book, source) pair — the same book mentioned by three sources becomes three entries. See the schema in `{HERMES_SKILL_DIR}/scripts/aggregate_books.py --help` or the example below.
 

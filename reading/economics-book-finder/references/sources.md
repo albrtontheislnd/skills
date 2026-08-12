@@ -6,8 +6,10 @@ A starting list, organized by tier. Tier controls how much weight a mention from
 Strongest prominence signal: curated by editorial boards/judging panels, usually covers business-and-economics together.
 - **Princeton University Press — Economics** — `press.princeton.edu/subjects/economics-finance`, `press.princeton.edu`
 - **Harvard University Press — Economics** — `hup.harvard.edu/browse/economics-business`, `hup.harvard.edu/features`, `hup.harvard.edu`
-- **University of Chicago Press — Economics** — `press.uchicago.edu`, `pressblog.uchicago.edu`
+- **University of Chicago Press — Economics** — `press.uchicago.edu`, `pressblog.uchicago.edu`, `stonecenter.uchicago.edu`
 - **IMF Book Reviews** — `www.imf.org/en/publications/fandd/categories/book%20reviews`
+- **LSE - The London School of Economics and Political Science** — `lse.ac.uk`, `blogs.lse.ac.uk/categories/book-reviews`
+- **MIT Press** - `mitpress.mit.edu`, `mitpress.mit.edu/search-result-list/?category=BUS&collection=new-releases`
 
 ## Tier 2 — Major outlets' nonfiction/economics coverage
 Broad readership, editorially curated, but not a formal award.
@@ -25,8 +27,24 @@ Prominence among the profession's own readers/practitioners; good for catching b
 - **VoxEU / CEPR** — cepr.org/voxeu
 - **Conversable Economist** (Timothy Taylor) — conversableeconomist.com
 
-## Tier 4 — Bestseller / sales-rank trackers
-High volume signal, weaker curation — useful for cross-checking, not for driving the list on their own.
+## Tier 4 — Open domain search (term-based)
+Not a curated page like the tiers above — these are domains to run a general `web_search` term query against (e.g. `site:domain.com "economics book" [year]`), useful for outlets that don't publish one stable "best of" page but do write about notable books as ordinary articles. Weaker signal per hit than a curated tier, since a single mention is just one article, not an editorial selection — weight accordingly.
+ 
+Search query templates to run per domain:
+- `site:<domain> "economics book" of [year]`
+- `site:<domain> "best economics books" of [year]`
+- `site:<domain> notable economics books of [year]`
+
+Domains:
+- blogs.cornell.edu
+- london.edu
+- library.hbs.edu
+- economics.princeton.edu
+- sites.lsa.umich.edu/mje
+- theguardian.com/books
+- npr.org
+- brookings.edu
+- aeaweb.org
 
 ## Tier 5 — Publisher catalogs (optional, for completeness rather than ranking)
 Useful to catch new releases early in the year before award/bestseller signal exists yet; weight low since inclusion isn't selective.
