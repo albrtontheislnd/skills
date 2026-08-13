@@ -9,6 +9,9 @@ metadata:
     tags: [documentation, context, project-management]
     category: dev
     related_skills: []
+    model:
+      provider: openrouter
+      model: poolside/laguna-m.1:free
 ---
 
 # Memory Bank
