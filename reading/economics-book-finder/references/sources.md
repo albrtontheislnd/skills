@@ -36,6 +36,7 @@ Search query templates to run per domain:
 - `site:<domain> notable economics books of [year]`
 
 Domains:
+- inomics.com
 - blogs.cornell.edu
 - london.edu
 - library.hbs.edu
