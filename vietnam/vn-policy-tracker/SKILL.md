@@ -35,7 +35,7 @@ Không dùng skill này cho tin tức chung chung không liên quan chính sách
 4. **Khử trùng lặp** giữa các nguồn (cùng một văn bản thường được đưa tin bởi nhiều báo). Có thể dùng `scripts/dedupe_rank.py` để hỗ trợ so khớp gần đúng theo số hiệu văn bản / tiêu đề.
 5. **Xếp hạng & phân loại** theo mức độ ảnh hưởng, giải thích lý do.
 6. **Viết báo cáo** theo `references/report_template.md`.
-7. **Lưu báo cáo vào workspace** với tên file có ngày tháng để theo dõi lịch sử các lần chạy (xem mục "Lưu báo cáo vào workspace" bên dưới).
+7. **Lưu báo cáo vào thư mục `vn-policy-briefings/` trong workspace** với tên file có ngày tháng để theo dõi lịch sử các lần chạy (xem mục "Lưu báo cáo vào workspace" bên dưới).
 
 
 ## Nhóm nguồn thu thập (chạy song song theo nhóm)
@@ -130,7 +130,9 @@ Dùng cấu trúc trong `references/report_template.md`. Báo cáo gồm:
 
 ## Lưu báo cáo vào workspace
  
-Sau khi hoàn tất báo cáo, **bắt buộc lưu file vào thư mục workspace** (không chỉ trả lời trong chat) để có thể tra cứu lại và so sánh giữa các lần chạy.
+Sau khi hoàn tất báo cáo, **bắt buộc lưu file vào thư mục `vn-policy-briefings/` trong workspace** (không chỉ trả lời trong chat) để có thể tra cứu lại và so sánh giữa các lần chạy.
+
+Workspace ở đây là **workspace do Hermes agent xác định tại thời điểm chạy**, không mặc định là thư mục mã nguồn của skill hoặc thư mục repository đang chứa skill. Thư mục mã nguồn skill chỉ chứa mã nguồn và tài liệu của skill, không chứa dữ liệu do agent tạo ra. Tạo thư mục `vn-policy-briefings/` trong workspace nếu thư mục này chưa tồn tại.
  
 **Quy ước đặt tên file** (bắt buộc theo đúng mẫu để dễ sắp xếp theo thời gian):
  
@@ -155,7 +157,7 @@ date -u +%Y%m%d-%H%M
  
 Ghi rõ ở đầu file báo cáo (đã có sẵn placeholder trong `references/report_template.md`) cả khung thời gian thu thập lẫn thời điểm chạy skill, để không phải mở tên file mới biết được.
  
-Nếu skill được chạy lặp lại nhiều lần (kể cả qua blueprint theo lịch), **không ghi đè lên báo cáo cũ** — mỗi lần chạy tạo một file mới theo quy ước trên, giữ lại toàn bộ lịch sử báo cáo trong workspace để tiện theo dõi/so sánh theo thời gian.
+Nếu skill được chạy lặp lại nhiều lần (kể cả qua blueprint theo lịch), **không ghi đè lên báo cáo cũ** — mỗi lần chạy tạo một file mới theo quy ước trên, giữ lại toàn bộ lịch sử báo cáo trong thư mục `vn-policy-briefings/` để tiện theo dõi/so sánh theo thời gian.
 
 ## Pitfalls
 
@@ -174,4 +176,4 @@ Trước khi gửi báo cáo, kiểm tra:
 - [ ] Mỗi mục có mức xếp hạng + lý do
 - [ ] **Tất Cả domain trong `references/domains.txt` đều đã được truy vấn ít nhất 1 lần** — không có domain nào bị bỏ sót hoàn toàn
 - [ ] Báo cáo có đầy đủ bảng theo dõi phạm vi nguồn (theo dòng, mỗi domain 1 trạng thái: Có kết quả / Không có kết quả phù hợp / Không truy cập được)
-- [ ] Báo cáo đã được lưu thành file trong workspace, đúng quy ước đặt tên có ngày tháng (không chỉ trả lời trong chat)
+- [ ] Báo cáo đã được lưu thành file trong thư mục `vn-policy-briefings/` của workspace do Hermes agent xác định, đúng quy ước đặt tên có ngày tháng (không chỉ trả lời trong chat và không lưu vào thư mục mã nguồn skill)

@@ -1,6 +1,6 @@
 # Mẫu báo cáo: Chính sách Chính phủ Việt Nam [khoảng ngày] — [khoảng ngày]
 
-**Tên file lưu trong workspace:** `vn-policy-report_[ngày bắt đầu]_den_[ngày kết thúc]_[thời điểm chạy YYYYMMDD-HHmm].md`
+**Tên file lưu trong thư mục `vn-policy-briefings/` của workspace:** `vn-policy-report_[ngày bắt đầu]_den_[ngày kết thúc]_[thời điểm chạy YYYYMMDD-HHmm].md`
 **Thời điểm chạy skill:** [ngày giờ thực tế lúc tạo báo cáo]
 **Khung thời gian:** [ngày bắt đầu] – [ngày kết thúc] (14 ngày gần nhất)
 **Nguồn đã thu thập:** liệt kê các domain đã truy cập thành công; ghi chú domain nào không truy cập được.
