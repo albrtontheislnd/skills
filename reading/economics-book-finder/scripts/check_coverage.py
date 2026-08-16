@@ -43,10 +43,12 @@ import argparse
 import json
 import re
 import sys
+from pathlib import Path
+from typing import Any
 
 
-def parse_sources(md_text: str) -> list:
-    names = []
+def parse_sources(md_text: str) -> list[str]:
+    names: list[str] = []
     tier = None
     section = None  # for Tier 4: "templates" or "domains"
     for raw_line in md_text.splitlines():
@@ -80,24 +82,38 @@ def main():
     ap.add_argument("--log", default="source_log.json", help="Path to source_log.json")
     args = ap.parse_args()
 
-    with open(args.sources) as f:
-        expected = parse_sources(f.read())
+    try:
+        expected = parse_sources(Path(args.sources).read_text(encoding="utf-8"))
+    except OSError as exc:
+        print(f"Unable to read sources file {args.sources}: {exc}", file=sys.stderr)
+        return 1
 
     try:
-        with open(args.log) as f:
-            log = json.load(f)
+        log: Any = json.loads(Path(args.log).read_text(encoding="utf-8"))
     except FileNotFoundError:
         print(f"No source_log.json found at {args.log} — sweep has not started.", file=sys.stderr)
         print(f"Expected {len(expected)} sources:", file=sys.stderr)
         for s in expected:
             print(f"  - {s}", file=sys.stderr)
-        sys.exit(1)
+        return 1
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"Unable to read valid JSON from {args.log}: {exc}", file=sys.stderr)
+        return 1
 
-    logged = {entry["source"] for entry in log}
+    if not isinstance(log, list) or any(not isinstance(entry, dict) for entry in log):
+        print(f"{args.log} must contain a JSON array of objects.", file=sys.stderr)
+        return 1
+
+    logged = {entry.get("source") for entry in log}
     missing = [s for s in expected if s not in logged]
-    invalid_status = [e["source"] for e in log if e.get("status") not in ("ok", "empty", "failed")]
+    duplicate_sources = sorted(source for source in logged if source and sum(1 for e in log if e.get("source") == source) > 1)
+    invalid_entries = [e.get("source", "<missing source>") for e in log if not isinstance(e.get("source"), str) or not e.get("source")]
+    invalid_status = [e.get("source", "<missing source>") for e in log if e.get("status") not in ("ok", "empty", "failed")]
     unreasoned_failures = [
-        e["source"] for e in log if e.get("status") == "failed" and not e.get("notes")
+        e.get("source", "<missing source>")
+        for e in log
+        if e.get("status") == "failed"
+        and (not isinstance(e.get("notes"), str) or not e.get("notes"))
     ]
 
     problems = False
@@ -109,19 +125,25 @@ def main():
     if invalid_status:
         problems = True
         print(f"INVALID STATUS on: {invalid_status} (must be ok/empty/failed)", file=sys.stderr)
+    if invalid_entries:
+        problems = True
+        print(f"SOURCE LOG entries missing a non-empty `source`: {invalid_entries}", file=sys.stderr)
+    if duplicate_sources:
+        problems = True
+        print(f"DUPLICATE SOURCE entries: {duplicate_sources}", file=sys.stderr)
     if unreasoned_failures:
         problems = True
         print(f"FAILED entries missing a `notes` reason: {unreasoned_failures}", file=sys.stderr)
 
     if problems:
-        sys.exit(1)
+        return 1
 
     ok = sum(1 for e in log if e["status"] == "ok")
     empty = sum(1 for e in log if e["status"] == "empty")
     failed = sum(1 for e in log if e["status"] == "failed")
     print(f"Full coverage: {len(expected)}/{len(expected)} sources logged ({ok} ok, {empty} empty, {failed} failed).")
-    sys.exit(0)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

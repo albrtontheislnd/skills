@@ -56,6 +56,7 @@ import json
 import re
 import sys
 from difflib import SequenceMatcher
+from pathlib import Path
 
 DEFAULT_TIER_WEIGHTS = {1: 5.0, 2: 3.0, 3: 2.0, 4: 1.0, 5: 0.5}
 CROSS_SOURCE_BONUS = 1.5
@@ -136,27 +137,54 @@ def main():
     )
     args = ap.parse_args()
 
-    with open(args.input) as f:
-        mentions = json.load(f)
+    if not 0 <= args.match_threshold <= 1:
+        ap.error("--match-threshold must be between 0 and 1")
+    if args.min_sources < 1:
+        ap.error("--min-sources must be at least 1")
 
+    try:
+        mentions = json.loads(Path(args.input).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"Unable to read valid JSON from {args.input}: {exc}", file=sys.stderr)
+        return 1
+
+    if not isinstance(mentions, list) or any(not isinstance(m, dict) for m in mentions):
+        print("Input must be a JSON array of mention objects.", file=sys.stderr)
+        return 1
+    required = ("title", "source")
+    invalid = [i for i, m in enumerate(mentions) if any(not isinstance(m.get(key), str) or not m.get(key).strip() for key in required)]
+    if invalid:
+        print(f"Mention entries missing non-empty title/source at indexes: {invalid}", file=sys.stderr)
+        return 1
     if not mentions:
         print("No mentions found in input — nothing to aggregate.", file=sys.stderr)
-        sys.exit(1)
+        return 1
 
     tier_weights = DEFAULT_TIER_WEIGHTS
     if args.weights:
-        tier_weights = {int(k): float(v) for k, v in json.loads(args.weights).items()}
+        try:
+            weight_data = json.loads(args.weights)
+            if not isinstance(weight_data, dict):
+                raise TypeError("weights must be a JSON object")
+            tier_weights = {int(k): float(v) for k, v in weight_data.items()}
+        except (ValueError, TypeError, json.JSONDecodeError) as exc:
+            print(f"--weights must be a JSON object of numeric tier weights: {exc}", file=sys.stderr)
+            return 1
 
     clusters = cluster_mentions(mentions, args.match_threshold)
     scored = [score_cluster(c, tier_weights) for c in clusters]
     scored = [s for s in scored if s["num_sources"] >= args.min_sources]
     scored.sort(key=lambda s: (-s["score"], -s["num_sources"], s["title"].lower()))
 
-    with open(args.output, "w") as f:
-        json.dump(scored, f, indent=2)
+    try:
+        Path(args.output).write_text(json.dumps(scored, indent=2) + "\n", encoding="utf-8")
+    except OSError as exc:
+        print(f"Unable to write {args.output}: {exc}", file=sys.stderr)
+        return 1
 
     print(f"Aggregated {len(mentions)} mentions into {len(scored)} ranked books -> {args.output}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

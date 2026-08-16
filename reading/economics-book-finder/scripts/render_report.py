@@ -10,6 +10,8 @@ USAGE
 
 import argparse
 import json
+import sys
+from pathlib import Path
 
 
 def render(books: list, year: str, top: int) -> str:
@@ -45,17 +47,29 @@ def main():
     ap.add_argument("--output", default="economics_books_report.md", help="Output markdown path")
     ap.add_argument("--top", type=int, default=0, help="Only include the top N books (0 = all)")
     args = ap.parse_args()
+    if args.top < 0:
+        ap.error("--top must be zero or greater")
 
-    with open(args.input) as f:
-        books = json.load(f)
+    try:
+        books = json.loads(Path(args.input).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"Unable to read valid JSON from {args.input}: {exc}", file=sys.stderr)
+        return 1
+    if not isinstance(books, list) or any(not isinstance(book, dict) for book in books):
+        print("Input must be a JSON array of ranked book objects.", file=sys.stderr)
+        return 1
 
     report = render(books, args.year or "This Year", args.top)
 
-    with open(args.output, "w") as f:
-        f.write(report)
+    try:
+        Path(args.output).write_text(report, encoding="utf-8")
+    except OSError as exc:
+        print(f"Unable to write {args.output}: {exc}", file=sys.stderr)
+        return 1
 
     print(f"Wrote report for {len(books) if not args.top else min(args.top, len(books))} books -> {args.output}")
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

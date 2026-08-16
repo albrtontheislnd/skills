@@ -1,6 +1,6 @@
 # Suggested Sources
 
-A starting list, organized by tier. Tier controls how much weight a mention from that source gets in `aggregate_books.py` (higher tier = more weight). Replace or extend freely — this is a draft, not a fixed canon. If you supply your own sources, tell the skill (or edit this file directly) so the tier weighting reflects how much you trust each one.
+A starting list, organized by tier. Tier controls how much weight a mention from that source gets in `aggregate_books.py` (lower tier number = stronger signal). Replace or extend freely — this is a draft, not a fixed canon. If you supply your own sources, tell the skill so the tier weighting reflects how much you trust each one.
 
 ## Tier 1 — Major awards & "best of the year" panels
 Strongest prominence signal: curated by editorial boards/judging panels, usually covers business-and-economics together.
@@ -48,4 +48,4 @@ Domains:
 - aeaweb.org
 
 ## Tier 5 — Publisher catalogs (optional, for completeness rather than ranking)
-Useful to catch new releases early in the year before award/bestseller signal exists yet; weight low since inclusion isn't selective.
+Useful to catch new releases early in the year before award/bestseller signal exists yet; weight low since inclusion isn't selective. Publisher-catalog mentions should be logged as Tier 5 and should not be treated as editorial endorsements.
