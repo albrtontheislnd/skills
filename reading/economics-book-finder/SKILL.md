@@ -88,7 +88,7 @@ Render the final markdown report:
 python {HERMES_SKILL_DIR}/scripts/render_report.py <output-subfolder>/ranked_books.json --year <year> --output <output-subfolder>/economics_books_<year>.md
 ```
 
-This produces a ranked list with each book's title, author, prominence score, and the sources that named it (linked). Present this file to the user rather than re-typing the list into the chat response — but do lead with a short prose summary of what stood out (e.g. a book that swept every tier, or a clear theme across this year's picks).
+The renderer always inserts a local-system-time timestamp before the `.md` extension using the `YYYYMMDD-HHmm` format, following the `vn-policy-tracker` convention; for example, `economics_books_2026_20260816-1430.md`. This produces a ranked list with each book's title, author, prominence score, and the sources that named it (linked). Present this file to the user rather than re-typing the list into the chat response — but do lead with a short prose summary of what stood out (e.g. a book that swept every tier, or a clear theme across this year's picks).
 
 Before finishing, verify that all generated files are in `<workspace>/<output-subfolder>/`, where `<workspace>` is the runtime workspace selected by Hermes, and that no generated data was written to the skill source directory. Report any inaccessible sources and the resulting coverage limitation.
 
@@ -98,6 +98,7 @@ Before finishing, verify that all generated files are in `<workspace>/<output-su
 - Run `check_coverage.py` successfully before aggregation.
 - Inspect `ranked_books.json` for duplicate books, implausible merges, and off-topic titles.
 - Confirm every report link points to the source URL recorded in the input data.
+- Confirm the report filename includes the local system time in `YYYYMMDD-HHmm` format.
 - Confirm generated artifacts exist only in the workspace output subdirectory.
 
 ## Copyright note
