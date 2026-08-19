@@ -27,15 +27,44 @@ Thu thập các văn bản pháp luật, chính sách, thông tư, nghị địn
 
 Không dùng skill này cho tin tức chung chung không liên quan chính sách/pháp luật, hoặc phân tích một văn bản luật cụ thể đã có sẵn (đó là việc đọc văn bản, không phải thu thập).
 
+## Quy tắc bắt buộc về workspace và output
+
+Mọi file được tạo trong một lần chạy skill — bao gồm báo cáo Markdown, dữ liệu thu thập, JSON, TXT, CSV, log, kết quả khử trùng lặp và mọi file trung gian khác — **phải được lưu trong đúng thư mục `vn-policy-briefings/` tại workspace root**. Không được tạo hoặc ghi các file runtime vào thư mục nguồn của skill (`${HERMES_SKILL_DIR}`), bất kỳ thư mục con nào của thư mục đó, thư mục tạm tuỳ ý, hoặc repository chứa skill.
+
+Thực hiện các bước sau **trước khi tạo bất kỳ file nào**:
+
+1. Xác định workspace root từ thư mục làm việc hiện tại của Hermes:
+   ```python
+   import os
+   workspace_root = os.getcwd()
+   ```
+2. Nếu `workspace_root` vẫn là placeholder chưa được thay thế (chứa đồng thời cả `<` và `>`), dừng ngay và yêu cầu workspace path thực tế:
+   ```python
+   if "<" in workspace_root and ">" in workspace_root:
+       raise ValueError("Refusing to run: the workspace path is an unfilled placeholder.")
+   ```
+3. Tạo thư mục output duy nhất bằng đường dẫn `<workspace_root>/vn-policy-briefings/` nếu chưa tồn tại. Không hỏi tên khác và không tạo thêm thư mục output nào.
+4. Chạy mọi script từ workspace root hoặc truyền đường dẫn tuyệt đối tới file trong thư mục output. Ví dụ, file JSON đầu vào và đầu ra của `dedupe_rank.py` đều phải ở trong thư mục output:
+   ```bash
+   python3 ${HERMES_SKILL_DIR}/scripts/dedupe_rank.py \
+     <workspace_root>/vn-policy-briefings/policy-records.json \
+     --expected-domains ${HERMES_SKILL_DIR}/references/domains.txt \
+     > <workspace_root>/vn-policy-briefings/policy-records-deduped.json \
+     2> <workspace_root>/vn-policy-briefings/policy-coverage.txt
+   ```
+   `references/domains.txt` là file tham chiếu có sẵn, chỉ được đọc; không tạo bản sao runtime của nó trong thư mục nguồn skill.
+5. Không ghi đè file output đã có. Mỗi lần chạy phải dùng tên mới có timestamp; giữ lại toàn bộ lịch sử trong `vn-policy-briefings/`. Nếu cần ghi log hoặc dữ liệu bổ sung, cũng đặt chúng trong thư mục này.
+
 ## Quy trình tổng quan
 
-1. **Xác định khung thời gian**: lấy ngày hiện tại thực tế (qua tool sẵn có, ví dụ kết quả `web_search` luôn có ngày, hoặc lệnh `date` nếu có `terminal`). Khung thu thập = [hôm nay - 14 ngày, hôm nay]. Nêu rõ khung thời gian này ở đầu báo cáo.
-2. **Thu thập song song theo nhóm nguồn** (xem `references/domains.md`): với mỗi nguồn/nhóm nguồn, dùng `web_search` (query theo mẫu ở dưới) rồi `web_extract`/`web_fetch` các trang kết quả có vẻ phù hợp. Nếu agent framework hỗ trợ chạy nhiều tác vụ con song song (sub-agents/parallel tool calls), hãy tách theo nhóm nguồn ở Bước 3 và chạy đồng thời — mỗi nhóm nguồn là một tác vụ độc lập, không phụ thuộc kết quả của nhóm khác.
-3. **Chuẩn hoá dữ liệu thu thập** thành các bản ghi có cấu trúc (xem schema bên dưới).
-4. **Khử trùng lặp** giữa các nguồn (cùng một văn bản thường được đưa tin bởi nhiều báo). Có thể dùng `scripts/dedupe_rank.py` để hỗ trợ so khớp gần đúng theo số hiệu văn bản / tiêu đề.
-5. **Xếp hạng & phân loại** theo mức độ ảnh hưởng, giải thích lý do.
-6. **Viết báo cáo** theo `references/report_template.md`.
-7. **Lưu báo cáo vào thư mục `vn-policy-briefings/` trong workspace** với tên file có ngày tháng để theo dõi lịch sử các lần chạy (xem mục "Lưu báo cáo vào workspace" bên dưới).
+1. **Khởi tạo output** theo mục "Quy tắc bắt buộc về workspace và output" ở trên trước khi tạo dữ liệu trung gian.
+2. **Xác định khung thời gian**: lấy ngày hiện tại thực tế (qua tool sẵn có, ví dụ kết quả `web_search` luôn có ngày, hoặc lệnh `date` nếu có `terminal`). Khung thu thập = [hôm nay - 14 ngày, hôm nay]. Nêu rõ khung thời gian này ở đầu báo cáo.
+3. **Thu thập song song theo nhóm nguồn** (xem `references/domains.md`): với mỗi nguồn/nhóm nguồn, dùng `web_search` (query theo mẫu ở dưới) rồi `web_extract`/`web_fetch` các trang kết quả có vẻ phù hợp. Nếu agent framework hỗ trợ chạy nhiều tác vụ con song song (sub-agents/parallel tool calls), hãy tách theo nhóm nguồn ở Bước 3 và chạy đồng thời — mỗi nhóm nguồn là một tác vụ độc lập, không phụ thuộc kết quả của nhóm khác.
+4. **Chuẩn hoá dữ liệu thu thập** thành các bản ghi có cấu trúc (xem schema bên dưới), lưu JSON/TXT và mọi dữ liệu trung gian trong `<workspace_root>/vn-policy-briefings/`.
+5. **Khử trùng lặp** giữa các nguồn (cùng một văn bản thường được đưa tin bởi nhiều báo). Có thể dùng `scripts/dedupe_rank.py` để hỗ trợ so khớp gần đúng theo số hiệu văn bản / tiêu đề; mọi file redirect stdout/stderr phải ở trong thư mục output.
+6. **Xếp hạng & phân loại** theo mức độ ảnh hưởng, giải thích lý do.
+7. **Viết báo cáo** theo `references/report_template.md`.
+8. **Lưu báo cáo** vào thư mục `<workspace_root>/vn-policy-briefings/` với tên file có ngày tháng để theo dõi lịch sử các lần chạy (xem mục "Lưu báo cáo vào workspace" bên dưới).
 
 
 ## Nhóm nguồn thu thập (chạy song song theo nhóm)
@@ -88,13 +117,17 @@ Khi gộp, giữ `sources` là danh sách hợp nhất tất cả URL liên quan
 
 Có thể dùng script hỗ trợ (khuyến nghị luôn dùng kèm `--expected-domains` để tự động kiểm tra bỏ sót nguồn):
 
+```bash
+python3 ${HERMES_SKILL_DIR}/scripts/dedupe_rank.py \
+  <workspace_root>/vn-policy-briefings/policy-records.json \
+  --expected-domains ${HERMES_SKILL_DIR}/references/domains.txt \
+  > <workspace_root>/vn-policy-briefings/policy-records-deduped.json \
+  2> <workspace_root>/vn-policy-briefings/policy-coverage.txt
 ```
-python3 ${HERMES_SKILL_DIR}/scripts/dedupe_rank.py input.json \
-  --expected-domains ${HERMES_SKILL_DIR}/references/domains.txt
-```
+Trong lệnh trên, thay `<workspace_root>` bằng workspace root thực tế đã xác định; **không** dùng đường dẫn tương đối như `input.json`, vì nó có thể tạo/đọc file ngoài thư mục output.
 
 Script nhận vào một file JSON là danh sách bản ghi theo schema trên (agent tự tạo file này sau khi thu thập), in ra:
-1. (stdout) Danh sách đã gộp trùng lặp — gộp theo số hiệu văn bản chuẩn hoá hoặc độ tương đồng tiêu đề, sắp theo `issue_date` giảm dần. Khi gộp, trường `sources` được hợp nhất (union), **không bị mất** — nhờ đó vẫn biết một văn bản từng xuất hiện trên (những) domain nào dù đã gộp trùng.
+1. (stdout) Danh sách đã gộp trùng lặp — gộp theo số hiệu văn bản chuẩn hoá hoặc độ tương đồng tiêu đề, sắp theo `issue_date` giảm dần. Khi gộp, trường `sources` được hợp nhất (union), **không bị mất** — nhờ đó vẫn biết một văn bản từng xuất hiện trên (những) domain nào dù đã gộp.
 2. (stderr) Bảng thống kê số bản ghi theo từng domain nguồn, và **cảnh báo rõ domain nào trong `domains.txt` không có bản ghi nào** — agent phải đọc phần cảnh báo này và xử lý theo mục "Bắt buộc: theo dõi phạm vi nguồn" bên dưới, không được bỏ qua.
 
 Đây chỉ là công cụ hỗ trợ gộp/sắp thứ tự thời gian/theo dõi phạm vi nguồn — việc **xếp hạng theo mức độ quan trọng** vẫn do agent thực hiện bằng lý giải (xem bên dưới), vì mức độ ảnh hưởng kinh tế-xã hội cần đánh giá định tính.
@@ -130,10 +163,10 @@ Dùng cấu trúc trong `references/report_template.md`. Báo cáo gồm:
 
 ## Lưu báo cáo vào workspace
  
-Sau khi hoàn tất báo cáo, **bắt buộc lưu file vào thư mục `vn-policy-briefings/` trong workspace** (không chỉ trả lời trong chat) để có thể tra cứu lại và so sánh giữa các lần chạy.
+Sau khi hoàn tất báo cáo, **bắt buộc lưu file vào thư mục `<workspace_root>/vn-policy-briefings/` trong workspace** (không chỉ trả lời trong chat) để có thể tra cứu lại và so sánh giữa các lần chạy. Quy tắc này áp dụng cho **tất cả** file được tạo trong quá trình chạy, không chỉ file báo cáo: JSON bản ghi, TXT theo dõi coverage, CSV, log, cache và mọi file trung gian đều phải nằm trong thư mục này.
 
-Workspace ở đây là **workspace do Hermes agent xác định tại thời điểm chạy**, không mặc định là thư mục mã nguồn của skill hoặc thư mục repository đang chứa skill. Thư mục mã nguồn skill chỉ chứa mã nguồn và tài liệu của skill, không chứa dữ liệu do agent tạo ra. Tạo thư mục `vn-policy-briefings/` trong workspace nếu thư mục này chưa tồn tại.
- 
+Workspace ở đây là **workspace do Hermes agent xác định tại thời điểm chạy** bằng `os.getcwd()`, không mặc định là thư mục mã nguồn của skill hoặc thư mục repository đang chứa skill. Thư mục mã nguồn skill chỉ chứa mã nguồn và tài liệu tĩnh của skill, không chứa dữ liệu do agent tạo ra. Tạo đúng một thư mục `vn-policy-briefings/` trong workspace nếu thư mục này chưa tồn tại; không tạo output ở vị trí khác.
+
 **Quy ước đặt tên file** (bắt buộc theo đúng mẫu để dễ sắp xếp theo thời gian):
  
 ```
@@ -176,4 +209,6 @@ Trước khi gửi báo cáo, kiểm tra:
 - [ ] Mỗi mục có mức xếp hạng + lý do
 - [ ] **Tất Cả domain trong `references/domains.txt` đều đã được truy vấn ít nhất 1 lần** — không có domain nào bị bỏ sót hoàn toàn
 - [ ] Báo cáo có đầy đủ bảng theo dõi phạm vi nguồn (theo dòng, mỗi domain 1 trạng thái: Có kết quả / Không có kết quả phù hợp / Không truy cập được)
+- [ ] Workspace root đã được xác định bằng `os.getcwd()` và đã từ chối nếu là placeholder chứa đồng thời `<` và `>`
+- [ ] **Tất cả file được tạo trong lần chạy** (báo cáo, JSON/TXT/CSV, log và file trung gian) đều nằm trong `<workspace_root>/vn-policy-briefings/`, không nằm trong thư mục nguồn skill hay nơi khác
 - [ ] Báo cáo đã được lưu thành file trong thư mục `vn-policy-briefings/` của workspace do Hermes agent xác định, đúng quy ước đặt tên có ngày tháng (không chỉ trả lời trong chat và không lưu vào thư mục mã nguồn skill)
